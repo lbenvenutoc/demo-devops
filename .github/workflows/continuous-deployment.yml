@@ -39,6 +39,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }}
 
+      - name: 🏷️ Extract repository info & version
+        run: |
+          echo "GHCR_URL=ghcr.io" >> $GITHUB_ENV
+          echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+          # Extraer versión directamente de Gradle
+          VERSION=$(./gradlew -q properties | grep '^version:' | awk '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: 🐳 Build & Push Docker image
         uses: docker/build-push-action@v4
         with:
