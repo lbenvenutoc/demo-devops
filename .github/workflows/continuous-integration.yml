@@ -41,13 +41,13 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: java
-          build-mode: autobuild
+          build-mode: none
 
       # 🧪 Tests + Coverage (ENFORCEMENT REAL)
       - name: 🧪 Run Tests + Coverage Check
         run: |
-          ./gradlew clean test jacocoTestReport jacocoTestCoverageVerification \
-            -PcoverageMinimum=0.8 --info
+          ./gradlew clean test jacocoTestReport --info
+          ./gradlew jacocoTestCoverageVerification -PcoverageMinimum=0.8 --info
 
       # 📊 Test report
       - name: 📊 Publish Test Results
