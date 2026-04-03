@@ -46,7 +46,7 @@ jobs:
 
       # 📊 Publicar resultados de tests en GitHub (🔥 clave)
       - name: 📊 Publish Test Results
-        uses: dorny/test-reporter@v3
+        uses: dorny/test-reporter@v4
         if: always()
         with:
           name: JUnit Tests
