@@ -44,15 +44,6 @@ jobs:
       - name: 🧪 Run Tests
         run: ./gradlew clean test jacocoTestReport --info
 
-      # 📊 Publicar resultados de tests en GitHub (🔥 clave)
-      - name: 📊 Publish Test Results
-        uses: dorny/test-reporter@v4
-        if: always()
-        with:
-          name: JUnit Tests
-          path: build/test-results/test/*.xml
-          reporter: java-junit
-
       # 📦 Build
       - name: 📦 Build
         run: ./gradlew build -x test
