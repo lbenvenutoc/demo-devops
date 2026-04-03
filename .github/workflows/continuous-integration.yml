@@ -53,13 +53,21 @@ jobs:
         with:
           category: "/language:java"
 
-      # 📊 Subir resultados de tests
+      # 📊 Upload Test Results (XML)
       - name: 📊 Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-xml
           path: build/test-results/test
+
+      # 📊 Upload Test HTML Report
+      - name: 📊 Upload Test HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-html
+          path: build/reports/tests/test
 
       # 📈 Subir coverage
       - name: 📈 Upload Coverage Report
