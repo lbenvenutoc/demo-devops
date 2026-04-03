@@ -1,29 +1,21 @@
 name: CD
-
 on:
   push:
     branches: [master]
 
 jobs:
   cd:
-    name: Build & Push Docker Image + Deploy Render
+    name: Build & Push Docker & Deploy on Render
     runs-on: ubuntu-22.04
 
-    permissions:
-      contents: read
-      packages: write   # 🔥 necesario para GHCR
-
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
-      # 📥 Checkout
+      # 1️⃣ Checkout
       - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ☕ Java 25 (alineado con tu proyecto)
+      # 2️⃣ Set up Java 25
       - name: ☕ Set up Java
         uses: actions/setup-java@v4
         with:
@@ -31,44 +23,43 @@ jobs:
           java-version: 25
           cache: gradle
 
-      # 🧱 Build JAR (CLAVE)
-      - name: 🧱 Build JAR
-        run: ./gradlew clean build -x test
-
-      # 🏷️ Variables
-      - name: 🏷️ Set image metadata
+      # 3️⃣ Extract GitHub Container Registry info
+      - name: 🏷️ Set env variables
         run: |
           echo "GHCR_URL=ghcr.io" >> $GITHUB_ENV
           echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-          echo "VERSION=$(./gradlew -q printVersion || echo 0.0.1-SNAPSHOT)" >> $GITHUB_ENV
+          echo "VERSION=$(./gradlew -q printVersion)" >> $GITHUB_ENV
+        # Nota: crea una task `printVersion` en Gradle si no existe, o usa:
+        # VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
-      # 📦 Login GHCR
-      - name: 📦 Login to GHCR
+      # 4️⃣ Build JAR
+      - name: 📦 Build JAR
+        run: ./gradlew clean build -x test
+
+      # 5️⃣ Login GHCR
+      - name: 📦 Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.GHCR_URL }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }}
 
-      # 🛠️ Buildx (FIX cache error)
-      - name: 🛠️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 🐳 Build & Push Docker image
+      # 6️⃣ Build & Push Docker image
       - name: 🐳 Build & Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: Dockerfile
           push: true
           tags: |
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:${{ env.VERSION }}
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          load: false
 
-      # 🚀 Deploy Render
+      # 7️⃣ Deploy on Render
       - name: 🚀 Deploy on Render
         run: |
-          curl --fail -X POST "https://api.render.com/deploy/${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
-          && echo "✅ Deployment triggered" \
+          echo "Triggering deployment on Render..."
+          curl --fail -X POST "${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
+          && echo "✅ Deployment triggered successfully" \
           || (echo "❌ Deployment failed" && exit 1)
