@@ -76,7 +76,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          ./gradlew sonar \
+          ./gradlew sonarqube \
             -Dsonar.branch.name=${GITHUB_REF_NAME}
 
       # 🔍 SonarQube (Pull Request Analysis)
