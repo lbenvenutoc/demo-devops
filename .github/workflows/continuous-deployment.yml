@@ -23,20 +23,18 @@ jobs:
           java-version: 25
           cache: gradle
 
-      # 3️⃣ Extract GitHub Container Registry info
-      - name: 🏷️ Set env variables
+      - name: 🏷️ Extract GitHub Container Registry, repository (lowercase) & version from pom
         run: |
           echo "GHCR_URL=ghcr.io" >> $GITHUB_ENV
           echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-          echo "VERSION=$(./gradlew -q printVersion)" >> $GITHUB_ENV
-        # Nota: crea una task `printVersion` en Gradle si no existe, o usa:
-        # VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-      # 4️⃣ Build JAR
-      - name: 📦 Build JAR
-        run: ./gradlew clean build -x test
-
-      # 5️⃣ Login GHCR
+      # 1º Crear Token de Acceso Personal:
+      #    GitHub → Settings → Developer settings → Personal access tokens → Generate new token (classic)
+      #    Permisos mínimos: write:packages, read:packages, delete:packages, repo
+      # 2º Crear secret en GitHub:
+      #    Repo → Settings → Secrets and variables → Actions → New repository secret
+      #    Name: GHCR_PERSONAL_ACCESS_TOKEN, Value: <tu token>
       - name: 📦 Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -44,22 +42,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }}
 
-      # 6️⃣ Build & Push Docker image
       - name: 🐳 Build & Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: Dockerfile
           push: true
           tags: |
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:${{ env.VERSION }}
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
-          load: false
 
-      # 7️⃣ Deploy on Render
+      # 🌐 Render Deployment
+      # 1. En Render: Web Service → Settings → Deploy Hook → copiar el token
+      # 2. En GitHub: Settings → Secrets and variables → Actions → crear secret: RENDER_DEPLOY_HOOK_TOKEN
       - name: 🚀 Deploy on Render
         run: |
-          echo "Triggering deployment on Render..."
-          curl --fail -X POST "${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
-          && echo "✅ Deployment triggered successfully" \
+          curl --fail -X POST "https://api.render.com/deploy/${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
+          && echo "✅ Deployment succeeded" \
           || (echo "❌ Deployment failed" && exit 1)
