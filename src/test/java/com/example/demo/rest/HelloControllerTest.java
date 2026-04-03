@@ -19,6 +19,6 @@ class HelloControllerTest {
 
     @Test
     void sayHelloTest() {
-        Assertions.assertEquals("Hello Luis!", helloController.sayHello());
+        Assertions.assertEquals("Hello World!", helloController.sayHello());
     }
 }
