@@ -58,6 +58,6 @@ jobs:
 
       - name: 🚀 Deploy on Render
         run: |
-          curl --fail -X POST "https://api.render.com/deploy/${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
+          curl --fail -X POST "${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" \
           && echo "✅ Deployment triggered" \
           || (echo "❌ Deployment failed" && exit 1)
