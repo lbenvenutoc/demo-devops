@@ -18,12 +18,14 @@ jobs:
       pull-requests: write
       checks: write
 
+    env:
+      # 🔥 Opt-in a Node 24 desde ahora
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       # 📥 Checkout
       - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       # ☕ Java 25
       - name: ☕ Set up Java
@@ -33,26 +35,36 @@ jobs:
           java-version: 25
           cache: gradle
 
-      # 🛡️ CodeQL Init
+      # 🛡️ CodeQL Init (ACTUALIZADO)
       - name: 🛡️ Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
-          queries: security-extended
 
       # 🧪 Tests + Coverage
-      - name: 🧪 Run Tests
-        run: ./gradlew clean test jacocoTestReport --info
+      - name: 🧪 Run Tests + Coverage Check
+        run: |
+          ./gradlew clean test jacocoTestReport jacocoTestCoverageVerification \
+            -PcoverageMinimum=0.8 --info
+
+      # 📊 Test report
+      - name: 📊 Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: JUnit Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
 
       # 📦 Build
       - name: 📦 Build
         run: ./gradlew build -x test
 
-      # 🔍 CodeQL Analysis
+      # 🔍 CodeQL Analyze (ACTUALIZADO)
       - name: 🔍 CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
-      # 📊 Upload HTML reports (opcional pero útil)
+      # 📊 HTML reports
       - name: 📊 Upload Test HTML Report
         if: always()
         uses: actions/upload-artifact@v4
