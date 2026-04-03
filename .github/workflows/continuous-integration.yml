@@ -69,24 +69,8 @@ jobs:
           name: jacoco-report
           path: build/reports/jacoco/test
 
-      # 🔍 SonarQube (Branch Analysis)
-      - name: 🔍 SonarQube Scan (Branch)
-        if: github.event_name != 'pull_request'
+      # 🔥 SONARCLOUD (único stage necesario)
+      - name: 🔍 SonarCloud Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          ./gradlew sonarqube \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} --info
-
-      # 🔍 SonarQube (Pull Request Analysis)
-      - name: 🔍 SonarQube Scan (PR)
-        if: github.event_name == 'pull_request'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          ./gradlew sonar \
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
-            -Dsonar.pullrequest.branch=${{ github.head_ref }} \
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+        run: ./gradlew build sonar --info
