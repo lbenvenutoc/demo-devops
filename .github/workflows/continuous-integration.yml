@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, release-*]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  devops:
+    name: Tests + CodeQL + SonarQube
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      # 📥 Checkout
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ☕ Java 25
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: gradle
+
+      # 🛡️ CodeQL Init
+      - name: 🛡️ Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+          queries: security-extended
+
+      # 🧪 Tests + Coverage
+      - name: 🧪 Run Tests
+        run: ./gradlew clean test jacocoTestReport --info
+
+      # 📦 Build (necesario para CodeQL)
+      - name: 📦 Build for CodeQL
+        run: ./gradlew build -x test
+
+      # 🔍 CodeQL Analysis
+      - name: 🔍 CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java"
+
+      # 📊 Subir resultados de tests
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results/test
+
+      # 📈 Subir coverage
+      - name: 📈 Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test
+
+      # 🔍 SonarQube (Branch Analysis)
+      - name: 🔍 SonarQube Scan (Branch)
+        if: github.event_name != 'pull_request'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./gradlew sonarqube \
+            -Dsonar.branch.name=${GITHUB_REF_NAME}
+
+      # 🔍 SonarQube (Pull Request Analysis)
+      - name: 🔍 SonarQube Scan (PR)
+        if: github.event_name == 'pull_request'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./gradlew sonarqube \
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
+            -Dsonar.pullrequest.branch=${{ github.head_ref }} \
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
