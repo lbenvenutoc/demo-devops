@@ -19,7 +19,6 @@ jobs:
       checks: write
 
     env:
-      # 🔥 Opt-in a Node 24 desde ahora
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
@@ -37,13 +36,14 @@ jobs:
           java-version: 25
           cache: gradle
 
-      # 🛡️ CodeQL Init (ACTUALIZADO)
+      # 🛡️ CodeQL Init
       - name: 🛡️ Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: java
+          build-mode: autobuild
 
-      # 🧪 Tests + Coverage
+      # 🧪 Tests + Coverage (ENFORCEMENT REAL)
       - name: 🧪 Run Tests + Coverage Check
         run: |
           ./gradlew clean test jacocoTestReport jacocoTestCoverageVerification \
@@ -58,11 +58,7 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
 
-      # 📦 Build
-      - name: 📦 Build
-        run: ./gradlew build -x test
-
-      # 🔍 CodeQL Analyze (ACTUALIZADO)
+      # 🔍 CodeQL Analysis
       - name: 🔍 CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
@@ -85,4 +81,4 @@ jobs:
       - name: 🔍 SonarCloud Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonar --info
+        run: ./gradlew sonar --info
