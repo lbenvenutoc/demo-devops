@@ -1,13 +1,15 @@
 name: CD
 on:
-  push:
-    branches: [master]
+  workflow_run:
+    workflows: ["CI"]       # <--- Espera a que el workflow CI termine
+    types:
+      - completed            # <--- Solo cuando CI haya terminado
 
 jobs:
   cd:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}  # <--- Solo si CI pasó runs-on: ubuntu-22.04
     name: Build & Push GitHub Package & Deploy on Render Docker Image
     runs-on: ubuntu-22.04
-    needs: devops
 
     steps:
       - name: ⬇️ Checkout repository
