@@ -20,6 +20,6 @@ class HelloControllerTest {
     @Test
     void sayHelloTest() {
         var name = "Luis";
-        Assertions.assertEquals("Hello Luis!", helloController.sayHello(name));
+        Assertions.assertEquals("Welcome Luis!", helloController.sayHello(name));
     }
 }
